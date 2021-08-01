@@ -1,2 +1,2 @@
 # BITFRONT
-API_using_BITFRONT
+API using BITFRONT
