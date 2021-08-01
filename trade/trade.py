@@ -7,20 +7,6 @@ from typing import List, Tuple
 URL_BASE = 'https://openapi.bitfront.me'
 coinpairs = COINPAIRS()
 
-def _send_request(request_path, parameter, method, ID):
-    headers = authority.get_headers(request_path, parameter, method, ID=ID)
-    data = authority.reformat_parameter(parameter)
-    if method == 'GET':
-        url = f'{URL_BASE}{request_path}?{data}'
-        req = requests.get(url, headers=headers, data=data)
-    elif method == 'POST':
-        url = f'{URL_BASE}{request_path}'
-        req = requests.post(url, headers=headers, data=data)
-    elif method == 'DELETE':
-        url = f'{URL_BASE}{request_path}?{data}'
-        req = requests.delete(url, headers=headers, data=data)
-    return req
-
 def get_balance(ID)->Tuple[bool, List]:
     logger_debugging.info('run')
     request_path='/v1/account/balances'
@@ -48,20 +34,19 @@ def get_order_info(ID, orderID)->Tuple[bool, dict]:
             return True, response.responseData
     return False, {}
 
-def get_all_orders_info(ID, market, currency, max=100)->Tuple[bool, List]:
+def get_all_orders_info(ID, coinPair, max=100)->Tuple[bool, List]:
     logger_debugging.info('run')
     request_path='/v1/trade/openOrders'
+    method='GET'
+    if not coinpairs.check_exist(coinPair):
+        logger_debugging.warning(f'no such pair of {coinPair}')
+        return False, []
+    currency, market = coinPair.split('.')
     parameter={
         'market':market, 
         'currency':currency, 
         'max':max
     }
-    method='GET'
-    coinPair = f'{currency}.{market}'
-    if not coinpairs.check_exist(coinPair):
-        logger_debugging.warning(f'no such pair of {coinPair}')
-        return False, []
-
     req = _send_request(request_path, parameter, method, ID)
     if check_requestSuccess(req):
         response = jsonText_2_list_class(req.text)
@@ -156,12 +141,11 @@ def cancel_all(ID, coinPair:str, time_interval=0.5, timeout=2)->bool:
     return False
 
 def _check_cancel_all(ID, coinPair, time_interval, timeout):
-    currency, market = coinPair.split('.')
     current_time = 0
     while current_time < timeout:
         time.sleep(time_interval)
         current_time += time_interval
-        flag, list_order = get_all_orders_info(ID, market, currency)
+        flag, list_order = get_all_orders_info(ID, coinPair)
         if not flag:
             logger_debugging.warning('fail to check cancel all')
             return False
@@ -170,3 +154,17 @@ def _check_cancel_all(ID, coinPair, time_interval, timeout):
             return True
     logger_debugging.warning(f'"Cancel All" requested, but {len(list_order)} orders remained')
     return False
+
+def _send_request(request_path, parameter, method, ID):
+    headers = authority.get_headers(request_path, parameter, method, ID=ID)
+    data = authority.reformat_parameter(parameter)
+    if method == 'GET':
+        url = f'{URL_BASE}{request_path}?{data}'
+        req = requests.get(url, headers=headers, data=data)
+    elif method == 'POST':
+        url = f'{URL_BASE}{request_path}'
+        req = requests.post(url, headers=headers, data=data)
+    elif method == 'DELETE':
+        url = f'{URL_BASE}{request_path}?{data}'
+        req = requests.delete(url, headers=headers, data=data)
+    return req
