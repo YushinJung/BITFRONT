@@ -75,7 +75,30 @@ def buy(ID, coinPair, quantity, price)->Tuple[bool,str]:
     if check_requestSuccess(req):
         response = jsonText_2_dict_class(req.text)
         if check_responseSuccess(response):
-            return True, response.responseData.orderID
+            orderID = response.responseData.orderID
+            logger_debugging.info(f'{coinPair} buy {quantity} at {price} - {orderID}')
+            return True, orderID
+    return False, ''
+
+def buy_direct(ID, coinPair, quantity) ->Tuple[bool, str]:
+    logger_debugging.info('run')
+    orderSide='BUY'
+    request_path = '/v1/trade/marketOrders'
+    parameter = {
+        'quantity':quantity,
+        'coinPair':coinPair,
+        'orderSide':orderSide
+    }
+    method = 'POST'
+    if not coinpairs.check_exist(coinPair):
+        return False, ''
+    req = _send_request(request_path, parameter, method, ID)
+    if check_requestSuccess(req):
+        response = jsonText_2_dict_class(req.text)
+        if check_responseSuccess(response):
+            orderID = response.responseData.orderID
+            logger_debugging.info(f'{coinPair} buy {quantity} - {orderID}')
+            return True, orderID
     return False, ''
 
 def sell(ID, coinPair, quantity, price)->Tuple[bool,str]:
@@ -95,7 +118,30 @@ def sell(ID, coinPair, quantity, price)->Tuple[bool,str]:
     if check_requestSuccess(req):
         response = jsonText_2_dict_class(req.text)
         if check_responseSuccess(response):
-            return True, response.responseData.orderID
+            orderID = response.responseData.orderID
+            logger_debugging.info(f'{coinPair} sell {quantity} at {price} - {orderID}')
+            return True, orderID
+    return False, ''
+
+def sell_direct(ID, coinPair, quantity)->Tuple[bool, str]:
+    logger_debugging.info('run')
+    orderSide='SELL'
+    request_path = '/v1/trade/marketOrders'
+    parameter = {
+        'quantity':quantity,
+        'coinPair':coinPair,
+        'orderSide':orderSide
+    }
+    method = 'POST'
+    if not coinpairs.check_exist(coinPair):
+        return False, ''
+    req = _send_request(request_path, parameter, method, ID)
+    if check_requestSuccess(req):
+        response = jsonText_2_dict_class(req.text)
+        if check_responseSuccess(response):
+            orderID = response.responseData.orderID
+            logger_debugging.info(f'{coinPair} sell {quantity} - {orderID}')
+            return True, orderID
     return False, ''
 
 def cancel(ID, orderID, time_interval=0.5, timeout=2)->bool:
@@ -120,8 +166,12 @@ def _check_cancel(ID, orderID, time_interval, timeout):
         if not flag:
             logger_debugging.warning(f'fail to check order {orderID}')
             return False
-        if order_info.filledAmount + order_info.remainAmount < order_info.initialRequestAmount:
-            logger_debugging.info('Success')
+        initialRequestAmount = order_info.initialRequestAmount
+        remainAmount = order_info.remainAmount
+        filledAmount = order_info.filledAmount
+        orderSide = order_info.orderSide
+        if filledAmount + remainAmount < initialRequestAmount:
+            logger_debugging.info(f'Success - canceled {orderSide} {initialRequestAmount - filledAmount} / {initialRequestAmount}')
             return True
     return False
 
