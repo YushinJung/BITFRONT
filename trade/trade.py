@@ -7,7 +7,7 @@ from typing import List, Tuple
 URL_BASE = 'https://openapi.bitfront.me'
 coinpairs = COINPAIRS()
 
-def get_balance(ID)->Tuple[bool, List]:
+def get_balances(ID)->Tuple[bool, List]:
     logger_debugging.info('run')
     request_path='/v1/account/balances'
     parameter={}
@@ -19,6 +19,15 @@ def get_balance(ID)->Tuple[bool, List]:
             logger_debugging.info('success')
             return True, response.responseData
     return False, []
+
+def get_balance(ID, coin)->Tuple[bool, dict]:
+    flag, list_balance = get_balances(ID)
+    if not flag:
+        return False, {}
+    for balance_info in list_balance.currency:
+        if balance_info.currency == coin:
+            return True, balance_info
+    return False, {}
 
 def get_order_info(ID, orderID)->Tuple[bool, dict]:
     logger_debugging.info('run')
