@@ -1,4 +1,5 @@
 import logging, json
+import win32api
 from time import timezone
 from types import SimpleNamespace
 
@@ -39,3 +40,12 @@ def jsonText_2_list_class(jsonText)->BITFRONT_1:
 def jsonText_2_dict_class(jsonText)->BITFRONT_2:
     return json.loads(jsonText, object_hook=lambda d: SimpleNamespace(**d))
 
+class SOUND:   
+    def __init__(self, duration = 100):
+        self.duration = duration
+
+    def error(self):
+        win32api.Beep(1000, self.duration)
+
+    def success(self):
+        win32api.Beep(5000, self.duration)

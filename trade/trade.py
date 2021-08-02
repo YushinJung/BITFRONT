@@ -8,7 +8,7 @@ URL_BASE = 'https://openapi.bitfront.me'
 coinpairs = COINPAIRS()
 
 def get_balances(ID)->Tuple[bool, List]:
-    logger_debugging.info('run')
+    logger_debugging.debug('run')
     request_path='/v1/account/balances'
     parameter={}
     method='GET'
@@ -16,21 +16,23 @@ def get_balances(ID)->Tuple[bool, List]:
     if check_requestSuccess(req):
         response = jsonText_2_list_class(req.text)
         if check_responseSuccess(response):
-            logger_debugging.info('success')
+            logger_debugging.debug('success')
             return True, response.responseData
     return False, []
 
 def get_balance(ID, coin)->Tuple[bool, dict]:
+    logger_debugging.debug(f'getting balance of {coin}')
     flag, list_balance = get_balances(ID)
     if not flag:
         return False, {}
-    for balance_info in list_balance.currency:
+    for balance_info in list_balance:
         if balance_info.currency == coin:
+            logger_debugging.debug(f'{balance_info}')
             return True, balance_info
     return False, {}
 
 def get_order_info(ID, orderID)->Tuple[bool, dict]:
-    logger_debugging.info('run')
+    logger_debugging.debug('run')
     request_path=f'/v2/account/orders/{orderID}'
     parameter={
     }
@@ -39,7 +41,7 @@ def get_order_info(ID, orderID)->Tuple[bool, dict]:
     if check_requestSuccess(req):
         response = jsonText_2_dict_class(req.text)
         if check_responseSuccess(response):
-            logger_debugging.info('success')
+            logger_debugging.debug('success')
             return True, response.responseData
     return False, {}
 
@@ -68,7 +70,7 @@ def get_all_orders_info(ID, coinPair, max=100)->Tuple[bool, List]:
     return False, []
 
 def buy(ID, coinPair, quantity, price)->Tuple[bool,str]:
-    logger_debugging.info('run')
+    logger_debugging.debug('run')
     orderSide='BUY'
     request_path = '/v1/trade/limitOrders'
     parameter = {
@@ -90,7 +92,7 @@ def buy(ID, coinPair, quantity, price)->Tuple[bool,str]:
     return False, ''
 
 def buy_direct(ID, coinPair, quantity) ->Tuple[bool, str]:
-    logger_debugging.info('run')
+    logger_debugging.debug('run')
     orderSide='BUY'
     request_path = '/v1/trade/marketOrders'
     parameter = {
@@ -111,7 +113,7 @@ def buy_direct(ID, coinPair, quantity) ->Tuple[bool, str]:
     return False, ''
 
 def sell(ID, coinPair, quantity, price)->Tuple[bool,str]:
-    logger_debugging.info('run')
+    logger_debugging.debug('run')
     orderSide='SELL'
     request_path = '/v1/trade/limitOrders'
     parameter = {
